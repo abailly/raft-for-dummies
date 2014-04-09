@@ -1,5 +1,5 @@
-% Distributed Consensus for Dummies
-    The Raft Protocol
+% Distributed Consensus for Dummies <br/>
+  The Raft Protocol
 % Arnaud Bailly &lt;abailly@murex.com&gt;
 % 2014-04
 
@@ -14,6 +14,8 @@
 * The emperor issues one order to any general, either **attack** or **defend** 
 * The goal is to ensure they **all** have the same order when asked to act, ie. they reach **consensus**
 
+# Let's Try It! #
+
 # Possible Assumptions #
 
 There can be various assumptions on the way the generals and the emperor coordinates
@@ -23,9 +25,13 @@ There can be various assumptions on the way the generals and the emperor coordin
 * Generals can be killed and not respond anymore
 * There is a traitor!
 
-# Let's Try It! #
+# Basic Architecture
+
+![](images/consensus-state-machine.svg)
 
 # Fundamental Impossibility Results #
+
+![Nancy Lynch]( images/lynch.jpg)
 
 -------------------------------------------------------------------------------
 
@@ -129,9 +135,11 @@ There can be various assumptions on the way the generals and the emperor coordin
 
 # Questions?
 
+
 # Credits 
 
 * [Napoléon à Austerlitz](http://en.wikipedia.org/wiki/File:Austerlitz-baron-Pascal.jpg)
 *
   [Retour vers le futur](http://series-tv.premiere.fr/News-Series/Raising-Hope-saison-3-Special-Retour-vers-le-futur-avec-Christopher-Lloyd-3527734)
 * [L'Académie](http://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Raffael_058.jpg/1024px-Raffael_058.jpg)
+* [Nancy Lynch at CSAIL](http://people.csail.mit.edu/lynch/)
