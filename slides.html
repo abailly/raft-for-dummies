@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Arnaud Bailly &lt;abailly@murex.com&gt;" />
+  <title>Distributed Consensus for Dummies  The Raft Protocol</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h3 class="title">Distributed Consensus for Dummies <br/> The Raft Protocol</h3>
+    <h4 class="author">Arnaud Bailly &lt;abailly@murex.com&gt;</h4>
+    <h3 class="date">2014-04</h3>
+</section>
+
+<section id="how-to-win-austerlitz" class="slide level1">
+<h3>How to Win Austerlitz?</h3>
+<figure>
+<img src="images/napoleon-austerlitz.jpg" alt="How to Win Austerlitz?" /><figcaption>How to Win Austerlitz?</figcaption>
+</figure>
+</section>
+<section id="the-rules" class="slide level1">
+<h3>The Rules</h3>
+<ul>
+<li class="fragment">The emperor must coordinate its generals: If only some of its generals carry its orders, he loses everything!</li>
+<li class="fragment">The emperor and its generals communicate with each other using <em>messengers</em> that carry orders</li>
+<li class="fragment">The emperor issues one order to any general, either <strong>attack</strong> or <strong>defend</strong></li>
+<li class="fragment">The goal is to ensure they <strong>all</strong> have the same order when asked to act, ie. they reach <strong>consensus</strong></li>
+</ul>
+</section>
+<section id="lets-try-it" class="slide level1">
+<h3>Let's Try It!</h3>
+</section>
+<section id="possible-assumptions" class="slide level1">
+<h3>Possible Assumptions</h3>
+<p>There can be various assumptions on the way the generals and the emperor coordinates</p>
+<ul>
+<li class="fragment">Messengers are <em>reliable</em>, ie. all messages are delivered and Generals are &quot;perfect&quot;</li>
+<li class="fragment">Messengers are <em>unreliable</em>: They can be killed, diverted, messages can arrive in wrong order...</li>
+<li class="fragment">Generals can be killed and not respond anymore</li>
+<li class="fragment">There is a traitor!</li>
+</ul>
+</section>
+<section id="basic-architecture" class="slide level1">
+<h3>Basic Architecture</h3>
+<figure>
+<img src="images/consensus-state-machine.svg" />
+</figure>
+</section>
+<section id="fundamental-impossibility-results" class="slide level1">
+<h3>Fundamental Impossibility Results</h3>
+<figure>
+<img src="images/lynch.jpg" alt="Nancy Lynch" /><figcaption>Nancy Lynch</figcaption>
+</figure>
+</section>
+<section class="slide level1">
+
+<p><strong>In an Asynchronous Network...</strong></p>
+<blockquote>
+<p>It is not possible to reach distributed consensus with arbitrary communication failures</p>
+<p><em>Distributed Algorithms</em>, Nancy Lynch, 1997, Morkan-Kaufmann</p>
+</blockquote>
+</section>
+<section class="slide level1">
+
+<p><strong>In a Partially Synchronous Network...</strong></p>
+<blockquote>
+<p>It is possible to reach consensus assuming <em>f</em> processes fail and there is an upper bound <em>d</em> for all messages provided the number of processes is greater than <em>2f</em></p>
+<p>Nancy Lynch, op.cit.</p>
+</blockquote>
+</section>
+<section id="and-in-practice" class="slide level1">
+<h3>And in Practice?</h3>
+<figure>
+<img src="images/retours-vers-le-futur.jpg" />
+</figure>
+</section>
+<section id="distributed-consensus-is-hard..." class="slide level1">
+<h3>Distributed Consensus is Hard...</h3>
+<p><a href="https://en.wikipedia.org/wiki/Fallacies_of_Distributed_Computing">The 8 Fallacies of Distributed Computing</a></p>
+<ol type="1">
+<li class="fragment">The network is reliable.</li>
+<li class="fragment">Latency is zero.</li>
+<li class="fragment">Bandwidth is infinite.</li>
+<li class="fragment">The network is secure.</li>
+<li class="fragment">Topology doesn't change.</li>
+<li class="fragment">There is one administrator.</li>
+<li class="fragment">Transport cost is zero.</li>
+<li class="fragment">The network is homogeneous.</li>
+</ol>
+</section>
+<section id="but-we-need-it" class="slide level1">
+<h3>... but We Need It</h3>
+<ul>
+<li class="fragment">Distributed transactions coordination
+<ul>
+<li class="fragment">⟶ Several processes should agree on <em>commit</em> or <em>rollback</em> some operation</li>
+</ul></li>
+<li class="fragment">Distributed Fault-Tolerant data stores (eg. ZooKeeper, Spanner)</li>
+<li class="fragment">Distributed Locking (eg. Google's Chubby)</li>
+</ul>
+</section>
+<section id="practical-consensus" class="slide level1">
+<h3>Practical Consensus</h3>
+<figure>
+<img src="images/rafael-academy.jpg" />
+</figure>
+</section>
+<section id="the-leader-paxos" class="slide level1">
+<h3>The Leader: Paxos</h3>
+<p><a href="http://research.microsoft.com/en-us/um/people/lamport/pubs/lamport-paxos.pdf">The Part-Time Parliament</a>, <em>L.Lamport</em></p>
+<blockquote>
+<p>Recent archaeological discoveries on the island of Paxos reveal that the parliament functioned de- spite the peripatetic propensity of its part-time legislators. The legislators maintained consistent copies of the parliamentary record, despite their frequent forays from the chamber and the forget- fulness of their messengers.</p>
+</blockquote>
+</section>
+<section id="paxos-principles" class="slide level1">
+<h3>Paxos Principles</h3>
+<ul>
+<li class="fragment">Core algorithm is called <em>Single-Decree Synod</em> and describes how a single proposed value is accepted by the distributed processes</li>
+<li class="fragment">Assumes non-Byzantine failures</li>
+<li class="fragment">Extension to <em>multiple decrees</em> is supposed to be straightforward but...</li>
+<li class="fragment">... Lamport omits a lot of details!</li>
+</ul>
+</section>
+<section id="paxos-implementation" class="slide level1">
+<h3>Paxos Implementation</h3>
+<blockquote>
+<p>While Paxos can be described with a page of pseudo-code, our complete implementation contains several thousand lines of C++ code. Converting the algorithm into a practical, production-ready system involved implementing many features and optimizations – some published in the literature and some not.</p>
+</blockquote>
+<blockquote>
+<p><a href="www.read.seas.harvard.edu/~kohler/class/08w-dsi/chandra07paxos.pdf">Paxos Made Live - An Engineering Perspective</a>, T.Chandra et al.</p>
+</blockquote>
+</section>
+<section id="the-challenger-raft" class="slide level1">
+<h3>The Challenger: Raft</h3>
+<ul>
+<li class="fragment"><a href="">In Search of an Understandable Consensus Algorithm</a>, D.Ongaro and J.Osterhout, 2013</li>
+<li class="fragment">Novel algorithm designed with <em>understandability</em> in mind</li>
+<li class="fragment">Dozens of implementations in various language</li>
+</ul>
+</section>
+<section id="principles-of-operation" class="slide level1">
+<h3>Principles of Operation</h3>
+<ul>
+<li class="fragment"><em>Leader-follower</em> based algorithm</li>
+<li class="fragment">Each instance is a <a href="https://dl.acm.org/citation.cfm?id=866204">Replicated state machine</a> whose states is uniquely determined by a linear <em>persistent log</em></li>
+<li class="fragment">Leader election proceeds in <em>monotonically increasing terms</em> when timeout fires</li>
+<li class="fragment">Leader orchestrates <em>safe log replication</em> to its <em>followers</em></li>
+</ul>
+</section>
+<section id="non-core-features" class="slide level1">
+<h3>Non-Core Features</h3>
+<ul>
+<li class="fragment">Supports cluster membership changes w/o service interruption</li>
+<li class="fragment">Log compaction for efficient operations</li>
+</ul>
+</section>
+<section id="java-implementation-barge" class="slide level1">
+<h3>Java Implementation: Barge</h3>
+<blockquote>
+<p><a href="https://github.com/mgodave/barge">https://github.com/mgodave/barge</a> !</p>
+</blockquote>
+<ul>
+<li class="fragment">OSS project started by <a href="http://github.com/mgodave">Dave Rusek</a> with contributions from <a href="http://github.com/justinsb">Justin Santa Barbara</a> and yours truly</li>
+<li class="fragment">Still very young but usable, provides 2 transport methods: Raw TCP and HTTP</li>
+<li class="fragment">Feature complete w.r.t base protocol but missing <em>cluster reconfiguration</em> and <em>log compaction</em></li>
+<li class="fragment">Friendly (Apache 2.0) License, <em>Pull Requests</em> are welcomed</li>
+</ul>
+</section>
+<section id="demo" class="slide level1">
+<h3>Demo</h3>
+</section>
+<section id="questions" class="slide level1">
+<h3>Questions?</h3>
+</section>
+<section id="credits" class="slide level1">
+<h3>Credits</h3>
+<ul>
+<li class="fragment"><a href="http://en.wikipedia.org/wiki/File:Austerlitz-baron-Pascal.jpg">Napoléon à Austerlitz</a></li>
+<li class="fragment"><a href="http://series-tv.premiere.fr/News-Series/Raising-Hope-saison-3-Special-Retour-vers-le-futur-avec-Christopher-Lloyd-3527734">Retour vers le futur</a></li>
+<li class="fragment"><a href="http://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Raffael_058.jpg/1024px-Raffael_058.jpg">L'Académie</a></li>
+<li class="fragment"><a href="http://people.csail.mit.edu/lynch/">Nancy Lynch at CSAIL</a></li>
+</ul>
+</section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'beige', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
