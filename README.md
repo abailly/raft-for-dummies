@@ -8,3 +8,7 @@ Use [pandoc](http://johnmacfarlane.net/pandoc/) to generate slides. `h1` tags ar
  default style:
 
 >  pandoc --slide-level 1 --variable theme=beige -i -s -o slides.html -t revealjs slides.md && sed -i -e s/h1/h3/g slides.html
+
+To create PDF version:
+
+> pandoc --slide-level 1 -i -s -t beamer -o slides.pdf slides.md  --latex-engine=xelatex -V colortheme:beaver

@@ -22,14 +22,14 @@
 
 <section>
     <h3 class="title">Distributed Consensus for Dummies <br/> The Raft Protocol</h3>
-    <h4 class="author">Arnaud Bailly &lt;abailly@murex.com&gt;</h4>
+    <h2 class="author">Arnaud Bailly &lt;abailly@murex.com&gt;</h2>
     <h3 class="date">2014-04</h3>
 </section>
 
 <section id="how-to-win-austerlitz" class="slide level1">
 <h3>How to Win Austerlitz?</h3>
 <figure>
-<img src="images/napoleon-austerlitz.jpg" alt="How to Win Austerlitz?" /><figcaption>How to Win Austerlitz?</figcaption>
+<img src="images/napoleon-austerlitz.jpg" />
 </figure>
 </section>
 <section id="the-rules" class="slide level1">
@@ -57,13 +57,13 @@
 <section id="basic-architecture" class="slide level1">
 <h3>Basic Architecture</h3>
 <figure>
-<img src="images/consensus-state-machine.svg" />
+<img src="images/consensus-state-machine.png" />
 </figure>
 </section>
 <section id="fundamental-impossibility-results" class="slide level1">
 <h3>Fundamental Impossibility Results</h3>
 <figure>
-<img src="images/lynch.jpg" alt="Nancy Lynch" /><figcaption>Nancy Lynch</figcaption>
+<img src="images/lynch.jpg" />
 </figure>
 </section>
 <section class="slide level1">
@@ -78,7 +78,7 @@
 
 <p><strong>In a Partially Synchronous Network...</strong></p>
 <blockquote>
-<p>It is possible to reach consensus assuming <em>f</em> processes fail and there is an upper bound <em>d</em> for all messages provided the number of processes is greater than <em>2f</em></p>
+<p>It is possible to reach consensus assuming <em>f</em> processes fail and there is an upper bound <em>d</em> on delivery time for all messages, provided the number of processes is greater than <em>2f</em></p>
 <p>Nancy Lynch, op.cit.</p>
 </blockquote>
 </section>
@@ -150,22 +150,35 @@
 <li class="fragment"><a href="">In Search of an Understandable Consensus Algorithm</a>, D.Ongaro and J.Osterhout, 2013</li>
 <li class="fragment">Novel algorithm designed with <em>understandability</em> in mind</li>
 <li class="fragment">Dozens of implementations in various language</li>
+<li class="fragment">Most prominent use is currently Go version for <a href="http://github.com/coreos/etcd">etcd</a> distributed configuration system in <a href="http://coreos.com">CoreOS</a></li>
 </ul>
 </section>
 <section id="principles-of-operation" class="slide level1">
 <h3>Principles of Operation</h3>
 <ul>
-<li class="fragment"><em>Leader-follower</em> based algorithm</li>
-<li class="fragment">Each instance is a <a href="https://dl.acm.org/citation.cfm?id=866204">Replicated state machine</a> whose states is uniquely determined by a linear <em>persistent log</em></li>
-<li class="fragment">Leader election proceeds in <em>monotonically increasing terms</em> when timeout fires</li>
+<li class="fragment"><em>Leader-follower</em> based algorithm: Leader is the single entry point for all operations on the cluster</li>
+<li class="fragment">Each instance is a <a href="https://dl.acm.org/citation.cfm?id=866204">Replicated state machine</a> whose state is uniquely determined by a linear <em>persistent log</em></li>
 <li class="fragment">Leader orchestrates <em>safe log replication</em> to its <em>followers</em></li>
+<li class="fragment"><em>(non-core)</em> Supports cluster membership changes w/o service interruption</li>
+<li class="fragment"><em>(non-core)</em> Log compaction for efficient operations</li>
 </ul>
 </section>
-<section id="non-core-features" class="slide level1">
-<h3>Non-Core Features</h3>
+<section id="leader-election" class="slide level1">
+<h3>Leader Election</h3>
 <ul>
-<li class="fragment">Supports cluster membership changes w/o service interruption</li>
-<li class="fragment">Log compaction for efficient operations</li>
+<li class="fragment">A replica starts election of a new <em>term</em> as a <em>candidate</em> after leader times-out</li>
+<li class="fragment">Replicas vote for the candidate whose <em>log</em> is at least as up-to-date as theirs</li>
+<li class="fragment">Candidate receiving majority of votes from other replicas becomes <em>leader</em></li>
+<li class="fragment">Leader starts sending <em>heartbeat</em> messages to all followers</li>
+</ul>
+</section>
+<section id="log-replication" class="slide level1">
+<h3>Log Replication</h3>
+<ul>
+<li class="fragment">Leader receives arbitrary <em>log entries</em> from client to update underlying <em>state machine</em></li>
+<li class="fragment">It sends messages to followers to ensure they replicate its own log</li>
+<li class="fragment">Entries are applied only when they are <em>committed</em> which happens when a majority of replicas has the new entry in their logs</li>
+<li class="fragment">Monotonicity of <em>term</em> indices ensures safety of committed entries when leader crashes or <em>split brain</em> happens</li>
 </ul>
 </section>
 <section id="java-implementation-barge" class="slide level1">

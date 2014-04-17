@@ -5,7 +5,7 @@
 
 # How to Win Austerlitz? #
 
-![How to Win Austerlitz?](images/napoleon-austerlitz.jpg)
+![](images/napoleon-austerlitz.jpg)
 
 # The Rules #
 
@@ -27,11 +27,11 @@ There can be various assumptions on the way the generals and the emperor coordin
 
 # Basic Architecture
 
-![](images/consensus-state-machine.svg)
+![](images/consensus-state-machine.png)
 
 # Fundamental Impossibility Results #
 
-![Nancy Lynch]( images/lynch.jpg)
+![](images/lynch.jpg)
 
 -------------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ There can be various assumptions on the way the generals and the emperor coordin
 
 **In a Partially Synchronous Network...**
 
-> It is possible to reach consensus assuming *f* processes fail and there is an upper bound *d* for all messages provided the
+> It is possible to reach consensus assuming *f* processes fail and there is an upper bound *d* on delivery time for all messages, provided the
 > number of processes is greater than *2f*
 > 
 > Nancy Lynch, op.cit.
@@ -108,19 +108,30 @@ There can be various assumptions on the way the generals and the emperor coordin
 * [In Search of an Understandable Consensus Algorithm](), D.Ongaro and J.Osterhout, 2013
 * Novel algorithm designed with *understandability* in mind
 * Dozens of implementations in various language
+* Most prominent use is currently Go version for [etcd](http://github.com/coreos/etcd) distributed configuration system in [CoreOS](http://coreos.com)
 
 # Principles of Operation #
 
-* *Leader-follower* based algorithm
-* Each instance is a  [Replicated state machine](https://dl.acm.org/citation.cfm?id=866204) whose states is uniquely determined by
+* *Leader-follower* based algorithm: Leader is the single entry point for all operations on the cluster
+* Each instance is a  [Replicated state machine](https://dl.acm.org/citation.cfm?id=866204) whose state is uniquely determined by
   a linear *persistent log*
-* Leader election proceeds in *monotonically increasing terms* when timeout fires
 * Leader orchestrates *safe log replication* to its *followers*
+* *(non-core)* Supports cluster membership changes w/o service interruption
+* *(non-core)* Log compaction for efficient operations
 
-# Non-Core Features #
+# Leader Election
 
-* Supports cluster membership changes w/o service interruption
-* Log compaction for efficient operations
+* A replica starts election of a new *term*  as a *candidate* after leader times-out
+* Replicas vote for the candidate whose *log* is at least as up-to-date as theirs
+* Candidate receiving majority of votes from other replicas becomes *leader*
+* Leader starts sending *heartbeat*  messages to all followers
+
+# Log Replication
+
+* Leader receives arbitrary *log entries*  from client to update underlying *state machine*
+* It sends messages to followers to ensure they replicate its own log
+* Entries are applied only when they are *committed* which happens when a majority of replicas has the new entry in their logs
+* Monotonicity of *term* indices ensures safety of committed entries when leader crashes or *split brain*  happens
 
 # Java Implementation: Barge #
 
