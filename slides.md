@@ -1,6 +1,6 @@
 % Distributed Consensus for Dummies <br/>
   The Raft Protocol
-% Arnaud Bailly &lt;abailly@murex.com&gt;
+% Arnaud Bailly &lt;abailly@murex.com&gt; <br/> @abailly
 % 2014-04
 
 # How to Win Austerlitz? #
